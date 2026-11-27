@@ -39,7 +39,7 @@ SQLほど厳格すぎず、スプレッドシートほど無秩序でもない�
 - **マルチスペース対応**：シングルバイナリで複数の DB をサーブする。
   - 1つのスペースは `hostname/path` に対応する。
   - `foo.db` を配置すると、`hostname/foo` 以下の URL で API アクセス可能になる。
-  - この場合 `hostname/foo/api/v1/tuples` 以下にAPIアクセスが可能になり、 `hostname/foo` にアクセスすると人間がTuple Spaceを操作するためのUIがある。
+  - この場合 `hostname/foo/api/v1/tuples` 以下でタプル操作、`hostname/foo/api/v1/schemas` 以下でスキーマドキュメント（`TUPLE_SCHEMA.md`）の登録・参照が可能になり、`hostname/foo` にアクセスすると人間がTuple Spaceを操作するためのUIがある。
   - `foo.db` と `bar/baz.db` を配置すると、`hostname/foo` と `hostname/bar/baz` でアクセス可能になる。
   - 何も指定しないでサーバーを起動すると、`default` という名前の Tuple Space を提供する(`default.db`が作成される)。
   - **パス名の予約語**：API エンドポイント（`/<space_path>/api/...`）と衝突するため、`api` はスペース名およびディレクトリ名として使用不可とする（例: `api.db`、`bar/api.db`、`api/baz.db` は不可）。

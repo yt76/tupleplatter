@@ -96,6 +96,53 @@ POST /foo/api/v1/tuples/take
 - 一致するタプルがあれば `200 OK` で1件返し、そのタプルをスペースから削除します。
 - 一致するタプルがない場合、`timeout_ms` が `0` なら即座に `404 Not Found`（または空結果）を返します。
 
+### スキーマドキュメント操作
+
+同じスペースを共有する他アプリや AI エージェントがデータ構造を理解できるよう、アプリごとの `TUPLE_SCHEMA.md` をスペース内に保存・参照できます。`<name>` にはアプリ名などの識別子（例: `todo-app`、英数字・ハイフン・アンダースコア推奨）を指定します。
+
+| 操作 | エンドポイント | 挙動 |
+| :--- | :--- | :--- |
+| **登録・更新** | `PUT /<space_path>/api/v1/schemas/<name>` | 生の Markdown 本文を登録・上書きする（`Content-Type: text/markdown; charset=utf-8`） |
+| **一覧取得** | `GET /<space_path>/api/v1/schemas` | 登録済みスキーマの一覧（名前・更新日時）を JSON で返す。`Accept: text/markdown` 指定時は全スキーマを結合した Markdown を返す |
+| **個別取得** | `GET /<space_path>/api/v1/schemas/<name>` | 指定したスキーマの Markdown 本文を `text/markdown` で返す |
+| **削除** | `DELETE /<space_path>/api/v1/schemas/<name>` | 指定したスキーマを削除する |
+
+#### リクエスト / レスポンス例（スペースが `foo`、アプリ名が `todo-app` の場合）
+
+**1. スキーマの登録・更新 (`PUT`)**
+```http
+PUT /foo/api/v1/schemas/todo-app
+Authorization: Bearer <SPACE_TOKEN>
+Content-Type: text/markdown; charset=utf-8
+
+# Todo App Schema
+...
+```
+レスポンス (`200 OK` または `201 Created`):
+```json
+{
+  "name": "todo-app",
+  "updated_at": "2026-11-27T13:00:00Z"
+}
+```
+
+**2. スキーマ一覧の取得 (`GET`)**
+```http
+GET /foo/api/v1/schemas
+Authorization: Bearer <SPACE_TOKEN>
+```
+レスポンス (`200 OK`):
+```json
+{
+  "schemas": [
+    {
+      "name": "todo-app",
+      "updated_at": "2026-11-27T13:00:00Z"
+    }
+  ]
+}
+```
+
 ---
 
 ## 4. アプリ実装時のルール
@@ -111,9 +158,19 @@ POST /foo/api/v1/tuples/take
 
 ---
 
-## 5. 【必須】スキーマドキュメントの出力ルール
+## 5. 【必須】スキーマドキュメントの出力・アップロードルール
 
-開発したアプリケーションが同じ Tuple Space を利用する**他のアプリや開発者とデータを共有できるようにするため**、実装完了時に必ずプロジェクトルートへ `TUPLE_SCHEMA.md`（または既存の共有スキーマドキュメント）を出力・更新してください。
+開発したアプリケーションが同じ Tuple Space を利用する**他のアプリや開発者、AI エージェントとデータを共有できるようにするため**、実装完了時に以下を行ってください。
+
+1. プロジェクトルートへ `TUPLE_SCHEMA.md` を出力・更新する。
+2. 接続先スペースとトークンが設定されている場合は、`PUT /<space_path>/api/v1/schemas/<app_name>` へ `TUPLE_SCHEMA.md` をアップロードする（またはアプリ起動時・デプロイ時にアップロードする仕組みを用意する）。
+
+```bash
+curl -X PUT "$TUPLE_PLATTER_URL/api/v1/schemas/todo-app" \
+  -H "Authorization: Bearer $TUPLE_PLATTER_TOKEN" \
+  -H "Content-Type: text/markdown; charset=utf-8" \
+  --data-binary @TUPLE_SCHEMA.md
+```
 
 スキーマドキュメントには、そのアプリが読み書きする**すべてのタプル型**について、以下の項目を漏れなく記載してください。
 
